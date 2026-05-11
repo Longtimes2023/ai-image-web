@@ -4,321 +4,517 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 图片生成工具 | Công cụ tạo ảnh AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: dark; }
+    :root {
+      /* Màu sắc chủ đạo (Rainbow Glass Theme) */
+      --glass-bg: rgba(20, 25, 40, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      --glass-blur: blur(24px);
+      
+      /* Cầu vồng rực rỡ */
+      --rainbow-gradient: linear-gradient(90deg, #ff595e, #ffca3a, #8ac926, #1982c4, #6a4c93, #ff595e);
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-vn: rgba(203, 213, 225, 0.85); /* Màu riêng cho text Tiếng Việt */
+    }
+
     body {
       margin: 0;
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      background: #0b1020;
-      color: #e5e7eb;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+      /* Nền gradient đa sắc di chuyển */
+      background-color: #0b1021;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(255, 89, 94, 0.35), transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(255, 202, 58, 0.35), transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(138, 201, 38, 0.35), transparent 50%),
+        radial-gradient(circle at 80% 90%, rgba(25, 130, 196, 0.35), transparent 50%),
+        radial-gradient(circle at 20% 10%, rgba(106, 76, 147, 0.35), transparent 50%);
+      background-attachment: fixed;
+      animation: bgPulse 15s ease-in-out infinite alternate;
+      display: flex;
+      flex-direction: column;
     }
-    .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+
+    @keyframes bgPulse {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    .wrap { 
+      max-width: 1240px; 
+      width: 100%;
+      margin: 40px auto; 
+      padding: 0 20px; 
+      box-sizing: border-box;
+      flex: 1;
+    }
+
+    /* ====== Kính mờ (Glassmorphism) Class ====== */
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 24px;
+    }
+
     .card {
-      display: grid; grid-template-columns: 1fr 380px; gap: 16px;
-      background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px;
+      display: grid; 
+      grid-template-columns: 1.2fr 380px; 
+      gap: 24px;
+      padding: 32px;
     }
-    @media (max-width: 860px) { .card { grid-template-columns: 1fr; } }
 
-    /* ====== 顶部 Tab ====== */
-    .top-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid #374151; }
+    @media (max-width: 900px) { 
+      .card { grid-template-columns: 1fr; padding: 20px; } 
+    }
+
+    /* ====== Typography Song Ngữ ====== */
+    .bi-text { display: flex; flex-direction: column; gap: 2px; }
+    .bi-cn { font-weight: 500; letter-spacing: 0.5px;}
+    .bi-vn { font-size: 0.85em; color: var(--text-vn); font-weight: 400; font-style: italic; }
+
+    h1 { 
+      margin: 0 0 24px; 
+      grid-column: 1 / -1; 
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    h1 .bi-cn { 
+      font-size: 28px; font-weight: 700; 
+      background: var(--rainbow-gradient); 
+      background-size: 200% auto;
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      animation: rainbow-anim 4s linear infinite;
+    }
+    h1 .bi-vn { font-size: 16px; color: var(--text-secondary); font-style: normal; }
+
+    /* ====== 顶部 Tab (Tabs điều hướng) ====== */
+    .top-tabs { 
+      display: flex; 
+      margin-bottom: 24px; 
+      border-radius: 16px; 
+      padding: 6px;
+      gap: 6px;
+      max-width: 400px;
+    }
     .top-tab {
-      flex: 1; text-align: center; padding: 8px; cursor: pointer; font-size: 15px; font-weight: 600;
-      background: #0f172a; color: #94a3b8; transition: .15s; user-select: none; line-height: 1.3;
+      flex: 1; text-align: center; padding: 10px 16px; cursor: pointer; 
+      border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .top-tab.active { background: #2563eb; color: #fff; }
-    .top-tab:first-child { border-right: 1px solid #374151; }
+    .top-tab:hover { background: rgba(255, 255, 255, 0.05); }
+    .top-tab.active { 
+      background: rgba(255, 255, 255, 0.15); box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+      border: 1px solid rgba(255,255,255,0.1); position: relative;
+    }
+    .top-tab.active::after {
+      content: ''; position: absolute; bottom: -1px; left: 15%; right: 15%; height: 3px;
+      background: var(--rainbow-gradient); background-size: 200% auto; border-radius: 3px 3px 0 0;
+      animation: rainbow-anim 3s linear infinite;
+    }
+    .top-tab .bi-cn { font-size: 15px; }
+    .top-tab .bi-vn { font-size: 12px; }
 
-    .tab-page { display: none; }
+    .tab-page { display: none; animation: fadeIn 0.4s ease; }
     .tab-page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    h1 { margin: 0 0 16px; font-size: 22px; grid-column: 1 / -1; }
-
-    label { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; display: block; line-height: 1.4; }
+    /* ====== Form Elements ====== */
+    label { margin-bottom: 8px; display: block; }
+    label .bi-cn { font-size: 14px; color: #e2e8f0; }
+    label .bi-vn { font-size: 12px; }
+    
     input, textarea {
       width: 100%; box-sizing: border-box;
-      border: 1px solid #374151; background: #0f172a; color: #e2e8f0;
-      border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+      border: 1px solid rgba(255,255,255,0.1); 
+      background: rgba(0,0,0,0.2); 
+      color: #f8fafc;
+      border-radius: 16px; 
+      padding: 16px; 
+      font-size: 15px; 
+      font-family: inherit;
+      transition: all 0.3s ease;
+      line-height: 1.5;
     }
-    textarea { min-height: 80px; resize: vertical; }
+    textarea { min-height: 100px; resize: vertical; }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #ffca3a;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 3px rgba(255, 202, 58, 0.2);
+    }
+    textarea::placeholder { color: #64748b; }
+
+    /* ====== Buttons ====== */
     button {
-      border: 0; background: #2563eb; color: #fff;
-      padding: 6px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; line-height: 1.4;
+      border: 0; background: var(--rainbow-gradient); color: #fff;
+      background-size: 200% auto;
+      padding: 14px 24px; border-radius: 16px; cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(255, 89, 94, 0.3);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      animation: rainbow-anim 3s linear infinite;
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    button.secondary { background: #374151; }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 202, 58, 0.4);
+    }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; filter: grayscale(50%); animation: none;}
+    
+    button.secondary { 
+      background: rgba(255, 255, 255, 0.1); 
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+      animation: none;
+    }
+    button.secondary:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 4px 15px rgba(255,255,255,0.1);}
+    
+    button .bi-cn { font-size: 16px; font-weight: 600; }
+    button .bi-vn { font-size: 12px; color: rgba(255,255,255,0.8); font-style: normal;}
 
-    /* ====== 左栏 ====== */
-    .main-panel { min-width: 0; }
+    @keyframes rainbow-anim {
+      to { background-position: 200% center; }
+    }
 
-    /* ====== 多图选择器 ====== */
-    .img-picker { margin-bottom: 12px; }
-    .thumb-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; }
+    /* ====== Prompt Guides (New Section) ====== */
+    .prompt-guides {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 12px;
+      border: 1px dashed rgba(255,255,255,0.1);
+    }
+    .guide-title {
+      font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .guide-links { display: flex; gap: 10px; flex-wrap: wrap;}
+    .guide-links a {
+      text-decoration: none; font-size: 12px; color: #e2e8f0;
+      background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.05); transition: 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .guide-links a:hover {
+      background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+    }
+
+    /* ====== 多图选择器 (Image Picker) ====== */
+    .img-picker { margin-bottom: 24px; }
+    .thumb-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
     .thumb-item {
-      width: 80px; height: 80px; border-radius: 8px; overflow: hidden;
-      border: 1px solid #374151; cursor: pointer; position: relative;
-      flex-shrink: 0; background: #0a0f18;
+      width: 88px; height: 88px; border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative;
+      flex-shrink: 0; background: rgba(0,0,0,0.3); transition: 0.3s;
     }
+    .thumb-item:hover { transform: scale(1.05); border-color: #ffca3a; box-shadow: 0 4px 15px rgba(0,0,0,0.4);}
     .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
     .thumb-item .thumb-remove {
-      position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
-      border-radius: 50%; background: rgba(0,0,0,.75); color: #e5e7eb;
-      border: 0; cursor: pointer; font-size: 12px; line-height: 18px;
-      text-align: center; padding: 0; display: none;
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+      border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: #fff;
+      border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-size: 14px; 
+      display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s;
+      padding: 0;
     }
-    .thumb-item:hover .thumb-remove { display: block; }
-    .thumb-item .thumb-remove:hover { background: rgba(185,28,28,.9); }
+    .thumb-item:hover .thumb-remove { opacity: 1; }
+    .thumb-item .thumb-remove:hover { background: #ef4444; border-color: #ef4444; }
     .thumb-add {
-      width: 80px; height: 80px; border-radius: 8px;
-      border: 2px dashed #374151; cursor: pointer; flex-shrink: 0;
+      width: 88px; height: 88px; border-radius: 16px;
+      border: 2px dashed rgba(255,255,255,0.15); cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      color: #64748b; font-size: 28px; background: #0f172a; transition: .15s;
+      color: var(--text-secondary); font-size: 32px; background: rgba(0,0,0,0.1); transition: 0.3s;
     }
-    .thumb-add:hover { border-color: #2563eb; color: #3b82f6; background: #111d32; }
+    .thumb-add:hover { border-color: #ffca3a; color: #ffca3a; background: rgba(255, 202, 58, 0.1); }
 
     /* ====== 结果区域 ====== */
     .result-area {
-      display: none; margin-top: 14px; text-align: center;
-      animation: fadeInUp .4s ease;
+      display: none; margin-top: 24px; text-align: center;
+      animation: fadeInUp .5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .result-area.active { display: block; }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
     .result-area img {
-      max-width: 100%; max-height: 500px; border-radius: 10px;
-      border: 1px solid #374151; cursor: zoom-in;
-      animation: fadeInUp .5s ease; transition: transform .15s;
+      max-width: 100%; max-height: 500px; border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in;
+      transition: transform .3s ease, box-shadow .3s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .result-area img:hover { transform: scale(1.02); }
+    .result-area img:hover { transform: scale(1.02); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
     .result-info {
-      margin-top: 6px; font-size: 12px; color: #6b7280;
+      margin-top: 12px; font-size: 13px; color: var(--text-secondary);
       display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
     }
-    .actions { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .actions { margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .actions button { padding: 10px 20px; border-radius: 12px; }
+    .actions button .bi-cn { font-size: 14px;}
+    .actions button .bi-vn { font-size: 11px;}
 
     .status-bar {
-      margin-top: 12px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
-      background: #0f172a; border: 1px solid #1f2937;
+      margin-top: 16px; padding: 12px 16px; border-radius: 12px; font-size: 13px;
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
       display: none; white-space: pre-wrap; word-break: break-word; line-height: 1.5;
     }
-    .status-bar.info { display: block; color: #93c5fd; border-color: #1e3a5f; background: #0c1929; }
-    .status-bar.done { display: block; color: #bbf7d0; border-color: #166534; background: #052016; }
-    .status-bar.err  { display: block; color: #fecdd3; border-color: #9f1239; background: #20060d; }
+    .status-bar.err  { display: block; color: #fecdd3; border-color: rgba(225, 29, 72, 0.3); background: rgba(225, 29, 72, 0.1); }
 
     /* ====== 右栏：实时面板 ====== */
     .side-panel {
-      display: flex; flex-direction: column; gap: 8px; min-height: 520px;
-      border-left: 1px solid #1f2937; padding-left: 16px;
+      display: flex; flex-direction: column; gap: 12px; min-height: 520px;
+      border-left: 1px solid rgba(255,255,255,0.05); padding-left: 24px;
     }
-    @media (max-width: 860px) {
-      .side-panel { border-left: 0; padding-left: 0; border-top: 1px solid #1f2937; padding-top: 14px; min-height: 0; }
+    @media (max-width: 900px) {
+      .side-panel { border-left: 0; padding-left: 0; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 24px; min-height: 0; }
     }
 
     .side-panel-header {
-      font-size: 12px; color: #64748b; text-transform: uppercase;
-      letter-spacing: .08em; display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 12px;
     }
-    .side-panel-header::after {
-      content: ''; flex: 1; height: 1px; background: #1f2937;
-    }
+    .side-panel-header .bi-text { flex-direction: row; align-items: baseline; gap: 6px; }
+    .side-panel-header .bi-cn { font-size: 13px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px;}
+    .side-panel-header .bi-vn { font-size: 11px; color: var(--text-secondary); text-transform: none; }
+    .side-panel-header::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
 
     /* loading mini */
     .loading-mini {
-      display: none; align-items: center; gap: 10px; padding: 8px 12px;
-      border-radius: 8px; background: #0c1929; border: 1px solid #1e3a5f;
+      display: none; align-items: center; gap: 12px; padding: 12px 16px;
+      border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
     }
     .loading-mini.active { display: flex; }
     .loading-mini .spinner-sm {
-      width: 22px; height: 22px; flex-shrink: 0;
-      border: 2px solid #1e3a5f; border-top-color: #3b82f6;
+      width: 20px; height: 20px; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.1); border-top-color: #ffca3a;
       border-radius: 50%; animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-mini .stats-row {
-      font-size: 11px; color: #64748b; display: flex; gap: 14px; flex-wrap: wrap;
-    }
+    .loading-mini .stats-row { font-size: 12px; color: #cbd5e1; display: flex; gap: 16px; flex-wrap: wrap; }
 
     /* 事件日志 */
     .event-log {
       display: none; flex: 1;
-      border: 1px solid #1a2236; border-radius: 8px; background: #0a0f18;
+      border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; background: rgba(0,0,0,0.2);
       overflow-y: auto; font-size: 12px; min-height: 200px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 8px 0;
     }
     .event-log.active { display: block; }
     .event-log .line {
-      padding: 2px 10px; border-bottom: 1px solid #0c1320;
-      display: flex; gap: 6px; align-items: flex-start;
+      padding: 4px 16px; border-bottom: 1px solid rgba(255,255,255,0.02);
+      display: flex; gap: 8px; align-items: flex-start;
     }
     .event-log .line:last-child { border-bottom: 0; }
-    .event-log .ts   { color: #4b5563; flex-shrink: 0; min-width: 54px; font-size: 11px; }
+    .event-log .ts   { color: #64748b; flex-shrink: 0; min-width: 54px; font-size: 11px; }
     .event-log .tag  { flex-shrink: 0; min-width: 44px; font-weight: 600; font-size: 11px; }
-    .event-log .tag.event-tag { color: #f59e0b; }
-    .event-log .tag.data-tag  { color: #3b82f6; }
-    .event-log .tag.text-tag  { color: #6b7280; }
-    .event-log .tag.done-tag  { color: #22c55e; }
-    .event-log .msg  { color: #9ca3af; word-break: break-all; flex: 1; }
+    .event-log .tag.event-tag { color: #fbbf24; }
+    .event-log .tag.data-tag  { color: #38bdf8; }
+    .event-log .tag.text-tag  { color: #94a3b8; }
+    .event-log .tag.done-tag  { color: #4ade80; }
+    .event-log .msg  { color: #cbd5e1; word-break: break-all; flex: 1; line-height: 1.4;}
 
     /* 文本流 */
     .text-stream {
-      display: none; padding: 8px 10px; border-radius: 8px;
-      font-size: 12px; background: #0a0f18; border: 1px solid #1a2236;
-      color: #9ca3af; overflow-y: auto; white-space: pre-wrap;
+      display: none; padding: 12px 16px; border-radius: 16px;
+      font-size: 13px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
+      color: #cbd5e1; overflow-y: auto; white-space: pre-wrap;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      max-height: 180px;
+      max-height: 180px; line-height: 1.5;
     }
     .text-stream.active { display: block; }
 
     /* ====== 全屏预览遮罩 ====== */
     .preview-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
-      background: rgba(0,0,0,.92); cursor: zoom-out;
+      background: rgba(0,0,0,.85); backdrop-filter: blur(10px); cursor: zoom-out;
       align-items: center; justify-content: center;
     }
     .preview-overlay.open { display: flex; }
     .preview-overlay img {
       max-width: 90vw; max-height: 90vh; object-fit: contain;
-      border-radius: 6px; user-select: none;
+      border-radius: 12px; user-select: none;
       transition: transform .1s ease; cursor: grab;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
     .preview-overlay img.dragging { cursor: grabbing; transition: none; }
     .preview-close {
-      position: absolute; top: 16px; right: 24px;
-      font-size: 32px; color: #9ca3af; cursor: pointer;
-      line-height: 1; z-index: 1; user-select: none;
+      position: absolute; top: 20px; right: 30px;
+      font-size: 40px; color: #cbd5e1; cursor: pointer;
+      line-height: 1; z-index: 1; user-select: none; transition: 0.2s;
     }
-    .preview-close:hover { color: #fff; }
+    .preview-close:hover { color: #fff; transform: scale(1.1); }
     .preview-hint {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      font-size: 12px; color: #6b7280; pointer-events: none; text-shadow: 0 1px 4px #000;
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: rgba(255,255,255,0.6); pointer-events: none; 
+      background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 20px;
     }
 
     /* ====== 图片展馆 ====== */
-    .gallery-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; }
-    .gallery-card h2 { margin: 0 0 4px; font-size: 16px; color: #e5e7eb; line-height: 1.4; }
     .gallery-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;
-      margin-top: 12px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;
+      margin-top: 20px;
     }
     .gallery-item {
-      background: #0f172a; border: 1px solid #1f2937; border-radius: 10px;
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;
       overflow: hidden; display: flex; flex-direction: column;
-      animation: fadeInUp .3s ease;
+      animation: fadeInUp .4s ease; transition: 0.3s;
     }
+    .gallery-item:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1);}
     .gallery-item .thumb-wrap {
       position: relative; overflow: hidden;
-      background: #0a0f18; cursor: pointer;
+      background: #000; cursor: pointer;
     }
     .gallery-item .thumb-wrap img {
-      width: 100%; height: auto; display: block; transition: transform .2s;
+      width: 100%; height: auto; display: block; transition: transform .4s cubic-bezier(0.4, 0, 0.2, 1);
       aspect-ratio: 1; object-fit: cover;
     }
-    .gallery-item .thumb-wrap:hover img { transform: scale(1.05); }
+    .gallery-item .thumb-wrap:hover img { transform: scale(1.08); }
     .gallery-item .thumb-wrap .mode-badge {
-      position: absolute; top: 6px; right: 6px;
-      font-size: 10px; padding: 2px 8px; border-radius: 999px;
-      background: rgba(0,0,0,.7); color: #e5e7eb;
+      position: absolute; top: 10px; right: 10px;
+      font-size: 11px; padding: 4px 10px; border-radius: 20px;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px); color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     .gallery-item .ref-row {
-      display: flex; gap: 4px; padding: 4px 6px 0; flex-wrap: wrap;
+      display: flex; gap: 6px; padding: 8px 12px 0; flex-wrap: wrap;
     }
     .gallery-item .ref-thumb {
-      width: 48px; height: 48px; border-radius: 4px; overflow: hidden;
-      border: 1px solid #374151; cursor: pointer; flex-shrink: 0;
-      background: #0a0f18;
+      width: 40px; height: 40px; border-radius: 8px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1); cursor: pointer; flex-shrink: 0;
     }
     .gallery-item .ref-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-item .ref-thumb:hover { border-color: #3b82f6; }
     .gallery-item .info {
-      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1;
+      padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1;
     }
     .gallery-item .info .prompt-text {
-      font-size: 12px; color: #9ca3af; line-height: 1.5;
+      font-size: 13px; color: #cbd5e1; line-height: 1.5;
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
       overflow: hidden; word-break: break-word; flex: 1;
     }
-    .gallery-item .info .prompt-row { display: flex; gap: 6px; align-items: flex-start; }
+    .gallery-item .info .prompt-row { display: flex; gap: 8px; align-items: flex-start; }
     .gallery-item .info .copy-prompt {
-      background: none; border: 0; color: #4b5563; cursor: pointer;
-      font-size: 13px; padding: 1px 4px; line-height: 1; flex-shrink: 0;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer;
+      font-size: 13px; padding: 4px 8px; border-radius: 8px; line-height: 1; flex-shrink: 0; transition: 0.2s;
     }
-    .gallery-item .info .copy-prompt:hover { color: #e5e7eb; }
+    .gallery-item .info .copy-prompt:hover { background: rgba(255,255,255,0.1); color: #fff; }
     .gallery-item .info .meta {
-      font-size: 11px; color: #4b5563; display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; color: #64748b; display: flex; justify-content: space-between; align-items: center;
+      padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);
     }
     .gallery-item .info .del-btn {
-      background: none; border: 0; color: #6b7280; cursor: pointer;
-      font-size: 16px; padding: 2px 6px; line-height: 1;
+      background: none; border: 0; color: #64748b; cursor: pointer;
+      font-size: 16px; padding: 2px 6px; line-height: 1; transition: 0.2s;
     }
     .gallery-item .info .del-btn:hover { color: #ef4444; }
-    .gallery-empty { text-align: center; color: #4b5563; font-size: 13px; padding: 24px 0; line-height: 1.6; }
-
+    .gallery-empty { text-align: center; color: var(--text-secondary); padding: 40px 0; line-height: 1.6; }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px;}
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top-tabs">
+    <!-- ============ 顶部 Tab ============ -->
+    <div class="top-tabs glass-panel">
       <div class="top-tab active" data-page="draw">
-        画图<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Vẽ ảnh</span>
+        <div class="bi-text">
+          <span class="bi-cn">画图</span>
+          <span class="bi-vn">Vẽ ảnh</span>
+        </div>
       </div>
       <div class="top-tab" data-page="gallery">
-        图片展馆 <span id="topGalleryBadge" style="font-size:12px;opacity:.7;"></span><br>
-        <span style="font-size:11px;font-weight:normal;opacity:0.8">Thư viện ảnh</span>
+        <div class="bi-text">
+          <span class="bi-cn">图片展馆 <span id="topGalleryBadge" style="font-size:12px;opacity:.7;"></span></span>
+          <span class="bi-vn">Thư viện ảnh</span>
+        </div>
       </div>
     </div>
 
+    <!-- ============ 画图页 ============ -->
     <div id="tabDraw" class="tab-page active">
-    <div class="card">
-      <h1>AI 图片生成<br><span style="font-size:16px;color:#94a3b8;font-weight:normal;">Tạo ảnh AI</span></h1>
+    <div class="card glass-panel">
+      <h1>
+        <span class="bi-cn">AI 图片生成</span>
+        <span class="bi-vn">Công cụ Sáng tạo Ảnh AI</span>
+      </h1>
 
+      <!-- ============ 左栏：输入 + 结果 ============ -->
       <div class="main-panel">
 
+        <!-- 参考图片选择器 -->
         <div class="img-picker">
           <label>
-            参考图片（可选，上传后自动切换为图生图模式，支持多张）<br>
-            <span style="font-size:12px;color:#94a3b8;font-weight:normal">Ảnh tham khảo (Tùy chọn, tải lên tự động đổi sang Ảnh-Sinh-Ảnh, hỗ trợ nhiều ảnh)</span>
+            <span class="bi-cn">参考图片 (可选，支持多张)</span>
+            <span class="bi-vn">Ảnh tham khảo (Tùy chọn, tự động đổi sang Ảnh-Sinh-Ảnh, hỗ trợ nhiều ảnh)</span>
           </label>
           <div class="thumb-row" id="thumbRow">
             <input id="imageFile" type="file" accept="image/*" multiple style="display:none;" />
-            <div id="thumbAdd" class="thumb-add" title="添加参考图片 (Thêm ảnh tham khảo)">+</div>
+            <div id="thumbAdd" class="thumb-add" title="Thêm ảnh tham khảo">+</div>
           </div>
         </div>
 
         <div>
           <label for="prompt">
-            图片描述（提示词）<br>
-            <span style="font-size:12px;color:#94a3b8;font-weight:normal">Mô tả ảnh (Prompt)</span>
+            <span class="bi-cn">图片描述（提示词）</span>
+            <span class="bi-vn">Mô tả chi tiết ảnh muốn tạo (Prompt)</span>
           </label>
-          <textarea id="prompt" placeholder="例如：一只在雨中奔跑的柴犬，皮克斯动画风格&#10;Ví dụ: Một chú chó Shiba chạy trong mưa, phong cách hoạt hình Pixar"></textarea>
+          <textarea id="prompt" placeholder="例如：一只在雨中奔跑的柴犬，皮克斯动画风格，8k，光线追踪&#10;Ví dụ: Một chú chó Shiba chạy trong mưa, phong cách hoạt hình Pixar, 8k, ray tracing"></textarea>
         </div>
 
-        <button id="genBtn" style="margin-top:10px; width:100%;">
-          生成图片<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo ảnh</span>
+        <!-- Hướng dẫn Prompt (New Apple-style card) -->
+        <div class="prompt-guides">
+           <div class="guide-title">💡 获取灵感 / Lấy cảm hứng Prompt:</div>
+           <div class="guide-links">
+              <a href="https://github.com/freestylefly/awesome-gpt-image-2/blob/main/README.zh-CN.md" target="_blank">
+                🇨🇳 中文指南 (Tiếng Trung)
+              </a>
+              <a href="https://github.com/freestylefly/awesome-gpt-image-2/blob/main/README.md" target="_blank">
+                🇬🇧 English Guide (Tiếng Anh)
+              </a>
+           </div>
+        </div>
+
+        <button id="genBtn" style="margin-top:20px; width:100%;">
+          <span class="bi-cn">✨ 生成图片</span>
+          <span class="bi-vn">Bắt đầu tạo ảnh</span>
         </button>
 
         <div id="resultArea" class="result-area">
-          <img id="resultImg" alt="生成的图片 (Ảnh đã tạo)" />
+          <img id="resultImg" alt="Ảnh đã tạo" />
           <div class="result-info"><span id="resultStats"></span></div>
           <div class="actions">
-            <button id="downloadBtn">下载图片<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Tải ảnh</span></button>
-            <button id="copyBtn" class="secondary">复制到剪贴板<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Sao chép</span></button>
+            <button id="downloadBtn">
+              <span class="bi-cn">下载图片</span><span class="bi-vn">Tải xuống</span>
+            </button>
+            <button id="copyBtn" class="secondary">
+              <span class="bi-cn">复制图片</span><span class="bi-vn">Sao chép ảnh</span>
+            </button>
           </div>
         </div>
 
         <div id="statusBar" class="status-bar"></div>
       </div>
 
+      <!-- ============ 右栏：实时面板 ============ -->
       <div class="side-panel">
         <div class="side-panel-header">
-          实时事件流 <span style="font-size:10px; opacity:0.8; margin-left:4px;">(Luồng sự kiện trực tiếp)</span>
+          <div class="bi-text">
+            <span class="bi-cn">实时事件流</span>
+            <span class="bi-vn">(Luồng hệ thống trực tiếp)</span>
+          </div>
         </div>
 
         <div id="loadingMini" class="loading-mini">
           <div class="spinner-sm"></div>
           <div class="stats-row">
             <span id="statEvents">📡 事件 (Sự kiện): 0</span>
-            <span id="statTextLen">📝 文本 (Văn bản): 0 字</span>
+            <span id="statTextLen">📝 文本 (Ký tự): 0</span>
             <span id="statElapsed">⏱ 0s</span>
           </div>
         </div>
@@ -329,27 +525,28 @@
       </div>
     </div>
 
-    <div id="previewOverlay" class="preview-overlay">
-      <span class="preview-close">&times;</span>
-      <img id="previewImg" alt="预览 (Xem trước)" draggable="false" />
-      <span class="preview-hint">滚轮缩放 (Cuộn để thu phóng)  ·  ESC 关闭 (ESC để đóng)</span>
-    </div>
-
+    <!-- ============ 图片展馆页 ============ -->
     <div id="tabGallery" class="tab-page">
-    <div class="gallery-card">
-      <h2>
-        生成记录展馆 <span id="galleryCount" style="font-size:13px;color:#64748b;font-weight:400;"></span><br>
-        <span style="font-size:13px;color:#94a3b8;font-weight:normal">Thư viện lịch sử tạo ảnh</span>
-      </h2>
+    <div class="gallery-card glass-panel">
+      <h1>
+        <span class="bi-cn">生成记录展馆 <span id="galleryCount" style="font-size:16px;color:var(--text-secondary);font-weight:400;"></span></span>
+        <span class="bi-vn">Thư viện lịch sử tạo ảnh cá nhân</span>
+      </h1>
       <div id="galleryGrid" class="gallery-grid"></div>
       <div id="galleryEmpty" class="gallery-empty" style="display:none;">
-        暂无生成记录，快去生成第一张图片吧<br>
-        <span style="font-size:12px;color:#64748b;display:block;margin-top:4px;">Chưa có lịch sử, hãy tạo bức ảnh đầu tiên nhé</span>
+        <span class="bi-cn" style="font-size: 16px;">暂无生成记录，快去生成第一张图片吧</span><br>
+        <span class="bi-vn" style="margin-top:8px; display:block;">Chưa có lịch sử, hãy thỏa sức sáng tạo bức ảnh đầu tiên nhé!</span>
       </div>
     </div>
     </div>
+  </div> <!-- end wrap -->
 
-    </div>
+  <!-- ============ 全屏预览遮罩 ============ -->
+  <div id="previewOverlay" class="preview-overlay">
+    <span class="preview-close">&times;</span>
+    <img id="previewImg" alt="Xem trước" draggable="false" />
+    <span class="preview-hint">滚轮缩放 (Cuộn để thu phóng) · ESC 关闭 (ESC để đóng) · 拖拽平移 (Kéo để di chuyển)</span>
+  </div>
 
   <script>
     // ========== DOM 引用 ==========
@@ -391,14 +588,12 @@
     let refImages = []; // { file, dataUrl }
 
     function renderThumbnails() {
-      // 清除旧缩略图
       els.thumbRow.querySelectorAll('.thumb-item').forEach((el) => el.remove());
       refImages.forEach((ref, i) => {
         const item = document.createElement('div');
         item.className = 'thumb-item';
         const img = document.createElement('img');
         img.src = ref.dataUrl;
-        img.alt = '参考图 (Ảnh tham khảo) ' + (i + 1);
         img.addEventListener('click', (e) => {
           e.stopPropagation();
           resultDataUrl = ref.dataUrl;
@@ -407,7 +602,7 @@
         item.appendChild(img);
         const rm = document.createElement('button');
         rm.className = 'thumb-remove';
-        rm.textContent = '×';
+        rm.innerHTML = '&times;';
         rm.title = '移除 (Xóa)';
         rm.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -421,7 +616,7 @@
 
     function addRefFiles(files) {
       const valid = Array.from(files).filter((f) => {
-        if (f.size > 50 * 1024 * 1024) { alert(`${f.name} 超过 50MB，已跳过 (Vượt quá 50MB, đã bỏ qua)`); return false; }
+        if (f.size > 50 * 1024 * 1024) { alert(`Vượt quá 50MB, đã bỏ qua: ${f.name}`); return false; }
         return true;
       });
       valid.forEach((file) => {
@@ -529,10 +724,7 @@
     async function addToGallery(dataUrl, prompt, mode, refDataUrl) {
       const id = Date.now();
       const record = {
-        id,
-        dataUrl,
-        prompt,
-        mode,
+        id, dataUrl, prompt, mode,
         refDataUrl: refDataUrl || null,
         time: new Date().toLocaleString('zh-CN'),
       };
@@ -556,7 +748,7 @@
         return;
       }
       els.galleryEmpty.style.display = 'none';
-      els.galleryCount.textContent = `(${gallery.length} 张)`;
+      els.galleryCount.textContent = `(${gallery.length})`;
       els.topGalleryBadge.textContent = `(${gallery.length})`;
 
       for (const r of gallery) {
@@ -567,7 +759,6 @@
         thumbWrap.className = 'thumb-wrap';
         const img = document.createElement('img');
         img.src = r.dataUrl;
-        img.alt = '生成的图片 (Ảnh đã tạo)';
         img.loading = 'lazy';
         img.addEventListener('click', () => {
           resultDataUrl = r.dataUrl;
@@ -577,12 +768,12 @@
 
         const badge = document.createElement('span');
         badge.className = 'mode-badge';
-        badge.textContent = r.mode === 1 ? '文生图 (Văn bản->Ảnh)' : '图生图 (Ảnh->Ảnh)';
+        badge.textContent = r.mode === 1 ? '文生图 (Txt2Img)' : '图生图 (Img2Img)';
         thumbWrap.appendChild(badge);
 
         card.appendChild(thumbWrap);
 
-        // 参考图行（图生图）
+        // 参考图行
         if (r.refDataUrl) {
           const refRow = document.createElement('div');
           refRow.className = 'ref-row';
@@ -590,7 +781,6 @@
           refThumb.className = 'ref-thumb';
           const refImg = document.createElement('img');
           refImg.src = r.refDataUrl;
-          refImg.alt = '参考图 (Ảnh tham khảo)';
           refThumb.addEventListener('click', (e) => {
             e.stopPropagation();
             resultDataUrl = r.refDataUrl;
@@ -615,13 +805,17 @@
 
         const copyBtn = document.createElement('button');
         copyBtn.className = 'copy-prompt';
-        copyBtn.innerHTML = '&#x1f4cb;';
-        copyBtn.title = '复制提示词 (Sao chép Prompt)';
+        copyBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        `;
+        copyBtn.title = 'Sao chép Prompt';
         copyBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           navigator.clipboard.writeText(r.prompt).then(() => {
-            copyBtn.innerHTML = '&#x2705;';
-            setTimeout(() => { copyBtn.innerHTML = '&#x1f4cb;'; }, 1200);
+            copyBtn.innerHTML = '✅';
+            setTimeout(() => { 
+              copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'; 
+            }, 1200);
           });
         });
         promptRow.appendChild(copyBtn);
@@ -632,10 +826,13 @@
         const timeSpan = document.createElement('span');
         timeSpan.textContent = r.time;
         meta.appendChild(timeSpan);
+        
         const delBtn = document.createElement('button');
         delBtn.className = 'del-btn';
-        delBtn.innerHTML = '&#x1f5d1;';
-        delBtn.title = '删除 (Xóa)';
+        delBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        `;
+        delBtn.title = 'Xóa';
         delBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           deleteFromGallery(r.id);
@@ -648,14 +845,13 @@
       }
     }
 
-    // 页面加载时从 IndexedDB 恢复
     loadGallery().then(() => renderGallery());
 
     // ========== 事件日志 ==========
     let eventCount = 0;
     function appendEvent(type, msg) {
       eventCount++;
-      els.statEvents.textContent = `📡 事件 (Sự kiện): ${eventCount}`;
+      els.statEvents.textContent = `📡 事件: ${eventCount}`;
       els.eventLog.classList.add('active');
       const now = new Date();
       const ts = now.toTimeString().slice(0, 8);
@@ -714,7 +910,6 @@
     async function buildPayload() {
       const prompt = els.prompt.value.trim();
       
-      // Model sẽ được gán ở file proxy backend của Cloudflare
       if (refImages.length > 0) {
         const editPrompt = `请根据以下要求，对我提供的参考图片进行编辑修改，直接生成修改后的新图片。要求：${prompt}`;
         const content = refImages.map((ref) => ({ type: 'input_image', image_url: ref.dataUrl }));
@@ -748,7 +943,7 @@
       els.statusBar.textContent = '';
       els.resultArea.classList.remove('active');
       els.genBtn.disabled = false;
-      els.genBtn.innerHTML = '生成图片<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo ảnh</span>';
+      els.genBtn.innerHTML = '<span class="bi-cn">✨ 生成图片</span><span class="bi-vn">Bắt đầu tạo ảnh</span>';
       resultDataUrl = null;
       resultBlob = null;
       eventCount = 0;
@@ -758,30 +953,25 @@
     // ========== 核心：发送请求 ==========
     async function generate() {
       const prompt = els.prompt.value.trim();
-      if (!prompt) { alert('请填写提示词 (Vui lòng nhập prompt)'); return; }
+      if (!prompt) { alert('Vui lòng nhập mô tả ảnh (Prompt)'); return; }
 
       let payload;
       try { payload = await buildPayload(); }
       catch (e) { alert(e.message); return; }
 
-      // ====== UI 进入生成状态 ======
       resetUI();
       lockInputs();
       els.genBtn.disabled = true;
-      els.genBtn.innerHTML = '生成中…<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Đang tạo...</span>';
+      els.genBtn.innerHTML = '<span class="bi-cn">⏳ 生成中...</span><span class="bi-vn">Đang xử lý tạo ảnh...</span>';
       els.loadingMini.classList.add('active');
-      els.statEvents.textContent = '📡 事件 (Sự kiện): 0';
-      els.statTextLen.textContent = '📝 文本 (Văn bản): 0 字';
+      els.statEvents.textContent = '📡 事件: 0';
+      els.statTextLen.textContent = '📝 文本: 0';
       startTimer();
 
-      appendEvent('event', '开始请求 (Bắt đầu gọi) POST /api/generate');
+      appendEvent('event', '开始请求 POST /api/generate');
 
-      // Gọi vào Cloudflare Pages Function thay vì API gốc
       const url = '/api/generate';
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-
+      const headers = { 'Content-Type': 'application/json' };
       let collectedText = [];
 
       try {
@@ -794,14 +984,14 @@
           els.loadingMini.classList.remove('active');
           unlockInputs();
           els.genBtn.disabled = false;
-          els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
-          appendEvent('event', `HTTP请求失败 (Yêu cầu thất bại) ${response.status} — ${errText}`);
+          els.genBtn.innerHTML = '<span class="bi-cn">🔄 重新生成</span><span class="bi-vn">Thử tạo lại</span>';
+          appendEvent('event', `HTTP请求失败 ${response.status} — ${errText}`);
           els.statusBar.className = 'status-bar err';
-          els.statusBar.innerHTML = `请求失败！(Yêu cầu thất bại!) HTTP ${response.status}${errText ? '<br>' + errText.slice(0, 500) : ''}`;
+          els.statusBar.innerHTML = `请求失败！(Lỗi API) HTTP ${response.status}${errText ? '<br>' + errText.slice(0, 500) : ''}`;
           return;
         }
 
-        appendEvent('event', `HTTP ${response.status} — 连接成功，开始接收流… (Kết nối thành công, đang nhận dữ liệu stream...)`);
+        appendEvent('event', `HTTP ${response.status} — 连接成功，开始接收流… (Đã kết nối, đang nhận dữ liệu...)`);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -852,18 +1042,17 @@
 
                   els.resultImg.src = dataUrl;
                   els.resultArea.classList.add('active');
-                  els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth || '?'} × ${els.resultImg.naturalHeight || '?'}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} 个事件 (Sự kiện)  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+                  els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth || '?'} × ${els.resultImg.naturalHeight || '?'}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} sự kiện  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
 
                   els.resultImg.onload = () => {
-                    els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth} × ${els.resultImg.naturalHeight}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} 个事件 (Sự kiện)  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+                    els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth} × ${els.resultImg.naturalHeight}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} sự kiện  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
                   };
 
-                  appendEvent('done', `图片已抓取！大小: (Đã lấy được ảnh! Dung lượng:) ${sizeStr}`);
+                  appendEvent('done', `图片已抓取！大小: (Lấy ảnh thành công! Dung lượng:) ${sizeStr}`);
                   unlockInputs();
                   els.genBtn.disabled = false;
-                  els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+                  els.genBtn.innerHTML = '<span class="bi-cn">✨ 再次生成</span><span class="bi-vn">Tạo ảnh khác</span>';
 
-                  // 添加到展馆
                   const mode = refImages.length > 0 ? 2 : 1;
                   const refUrl = refImages.length > 0 ? refImages[0].dataUrl : null;
                   addToGallery(dataUrl, prompt, mode, refUrl);
@@ -877,9 +1066,9 @@
                   els.textStream.classList.add('active');
                   els.textStream.textContent += delta;
                   els.textStream.scrollTop = els.textStream.scrollHeight;
-                  els.statTextLen.textContent = `📝 文本 (Văn bản): ${collectedText.join('').length} 字 (từ)`;
+                  els.statTextLen.textContent = `📝 文本: ${collectedText.join('').length} 字`;
                   if (collectedText.length % 5 === 1) {
-                    appendEvent('text', `已接收 (Đã nhận) ${collectedText.length} 个 delta (累计/Tổng ${collectedText.join('').length} 字/từ)`);
+                    appendEvent('text', `已接收 ${collectedText.length} 个 delta (累计 ${collectedText.join('').length} 字)`);
                   }
                 }
 
@@ -892,35 +1081,34 @@
           }
         }
 
-        // 流结束，没图片
         stopTimer();
         els.loadingMini.classList.remove('active');
         unlockInputs();
         els.genBtn.disabled = false;
-        els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+        els.genBtn.innerHTML = '<span class="bi-cn">🔄 重新生成</span><span class="bi-vn">Thử tạo lại</span>';
 
-        appendEvent('event', '流已结束 (Stream kết thúc) — [DONE]');
+        appendEvent('event', '流已结束 — [DONE]');
         if (collectedText.length) {
           const fullText = collectedText.join('');
-          appendEvent('done', `模型返回 ${fullText.length} 字文本，未生成图片 (Model trả về văn bản, không có ảnh)`);
+          appendEvent('done', `模型返回 ${fullText.length} 字文本，未生成图片`);
           els.textStream.classList.add('active');
           els.textStream.textContent = fullText;
           els.statusBar.className = 'status-bar err';
-          els.statusBar.innerHTML = '⚠️ 流式返回结束，没找到图片。模型选择了用文字回答而不是生成图片。<br>提示：尝试更明确的描述，例如 "请编辑这张图片…"<br><br>(Stream kết thúc, không tìm thấy ảnh. Model đã trả lời bằng chữ. Mẹo: Hãy mô tả rõ hơn, ví dụ "Hãy chỉnh sửa bức ảnh này...")';
+          els.statusBar.innerHTML = '⚠️ 流式返回结束，没找到图片。模型选择了用文字回答而不是生成图片。<br><br>(Hệ thống trả về văn bản, không có ảnh. Gợi ý: Hãy mô tả cụ thể hơn là bạn muốn VẼ ảnh)';
         } else {
-          appendEvent('done', '流结束，无图片无文本 (Stream kết thúc, không ảnh không chữ)');
+          appendEvent('done', '流结束，无图片无文本');
           els.statusBar.className = 'status-bar err';
-          els.statusBar.innerHTML = '⚠️ 流式返回结束，未收到图片也没有文本内容。可能服务器未正确响应。<br>(Stream kết thúc, không nhận được dữ liệu ảnh hay chữ. Có thể máy chủ phản hồi lỗi.)';
+          els.statusBar.innerHTML = '⚠️ 未收到图片也没有文本内容。可能服务器未正确响应。<br>(Không nhận được dữ liệu. Có thể máy chủ phản hồi lỗi.)';
         }
       } catch (err) {
         stopTimer();
         els.loadingMini.classList.remove('active');
         unlockInputs();
         els.genBtn.disabled = false;
-        els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
-        appendEvent('event', `异常 (Lỗi): ${err.message || err}`);
+        els.genBtn.innerHTML = '<span class="bi-cn">🔄 重新生成</span><span class="bi-vn">Thử tạo lại</span>';
+        appendEvent('event', `异常: ${err.message || err}`);
         els.statusBar.className = 'status-bar err';
-        els.statusBar.textContent = '发生异常 (Đã xảy ra lỗi)：' + (err.message || err);
+        els.statusBar.textContent = '发生异常 (Có lỗi xảy ra): ' + (err.message || err);
       }
     }
 
@@ -947,10 +1135,10 @@
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': resultBlob })]);
         const orig = els.copyBtn.innerHTML;
-        els.copyBtn.innerHTML = '已复制！<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Đã chép!</span>';
-        setTimeout(() => { els.copyBtn.innerHTML = orig; }, 1500);
+        els.copyBtn.innerHTML = '<span class="bi-cn">✅ 已复制！</span><span class="bi-vn">Đã chép vào khay nhớ</span>';
+        setTimeout(() => { els.copyBtn.innerHTML = orig; }, 2000);
       } catch {
-        alert('复制失败，浏览器可能不支持。请用下载替代。(Sao chép thất bại, trình duyệt không hỗ trợ. Vui lòng nhấn Tải ảnh xuống.)');
+        alert('Trình duyệt không hỗ trợ Copy ảnh trực tiếp. Vui lòng bấm Tải xuống!');
       }
     }
 
@@ -993,7 +1181,6 @@
       }
     });
 
-    // 滚轮缩放（以鼠标位置为锚点）
     els.previewOverlay.addEventListener('wheel', (e) => {
       if (!els.previewOverlay.classList.contains('open')) return;
       e.preventDefault();
@@ -1014,7 +1201,6 @@
       updatePreviewTransform();
     });
 
-    // 拖拽平移
     els.previewImg.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       isDragging = true;
