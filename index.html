@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 图片生成工具 | Công cụ tạo ảnh AI</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background: #0b1020;
+      color: #e5e7eb;
+    }
+    .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+    .card {
+      display: grid; grid-template-columns: 1fr 380px; gap: 16px;
+      background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px;
+    }
+    @media (max-width: 860px) { .card { grid-template-columns: 1fr; } }
+
+    /* ====== 顶部 Tab ====== */
+    .top-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid #374151; }
+    .top-tab {
+      flex: 1; text-align: center; padding: 8px; cursor: pointer; font-size: 15px; font-weight: 600;
+      background: #0f172a; color: #94a3b8; transition: .15s; user-select: none; line-height: 1.3;
+    }
+    .top-tab.active { background: #2563eb; color: #fff; }
+    .top-tab:first-child { border-right: 1px solid #374151; }
+
+    .tab-page { display: none; }
+    .tab-page.active { display: block; }
+
+    h1 { margin: 0 0 16px; font-size: 22px; grid-column: 1 / -1; }
+
+    label { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; display: block; line-height: 1.4; }
+    input, textarea {
+      width: 100%; box-sizing: border-box;
+      border: 1px solid #374151; background: #0f172a; color: #e2e8f0;
+      border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    button {
+      border: 0; background: #2563eb; color: #fff;
+      padding: 6px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; line-height: 1.4;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: #374151; }
+
+    /* ====== 左栏 ====== */
+    .main-panel { min-width: 0; }
+
+    /* ====== 多图选择器 ====== */
+    .img-picker { margin-bottom: 12px; }
+    .thumb-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; }
+    .thumb-item {
+      width: 80px; height: 80px; border-radius: 8px; overflow: hidden;
+      border: 1px solid #374151; cursor: pointer; position: relative;
+      flex-shrink: 0; background: #0a0f18;
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-item .thumb-remove {
+      position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+      border-radius: 50%; background: rgba(0,0,0,.75); color: #e5e7eb;
+      border: 0; cursor: pointer; font-size: 12px; line-height: 18px;
+      text-align: center; padding: 0; display: none;
+    }
+    .thumb-item:hover .thumb-remove { display: block; }
+    .thumb-item .thumb-remove:hover { background: rgba(185,28,28,.9); }
+    .thumb-add {
+      width: 80px; height: 80px; border-radius: 8px;
+      border: 2px dashed #374151; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #64748b; font-size: 28px; background: #0f172a; transition: .15s;
+    }
+    .thumb-add:hover { border-color: #2563eb; color: #3b82f6; background: #111d32; }
+
+    /* ====== 结果区域 ====== */
+    .result-area {
+      display: none; margin-top: 14px; text-align: center;
+      animation: fadeInUp .4s ease;
+    }
+    .result-area.active { display: block; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-area img {
+      max-width: 100%; max-height: 500px; border-radius: 10px;
+      border: 1px solid #374151; cursor: zoom-in;
+      animation: fadeInUp .5s ease; transition: transform .15s;
+    }
+    .result-area img:hover { transform: scale(1.02); }
+    .result-info {
+      margin-top: 6px; font-size: 12px; color: #6b7280;
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+    }
+    .actions { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+    .status-bar {
+      margin-top: 12px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
+      background: #0f172a; border: 1px solid #1f2937;
+      display: none; white-space: pre-wrap; word-break: break-word; line-height: 1.5;
+    }
+    .status-bar.info { display: block; color: #93c5fd; border-color: #1e3a5f; background: #0c1929; }
+    .status-bar.done { display: block; color: #bbf7d0; border-color: #166534; background: #052016; }
+    .status-bar.err  { display: block; color: #fecdd3; border-color: #9f1239; background: #20060d; }
+
+    /* ====== 右栏：实时面板 ====== */
+    .side-panel {
+      display: flex; flex-direction: column; gap: 8px; min-height: 520px;
+      border-left: 1px solid #1f2937; padding-left: 16px;
+    }
+    @media (max-width: 860px) {
+      .side-panel { border-left: 0; padding-left: 0; border-top: 1px solid #1f2937; padding-top: 14px; min-height: 0; }
+    }
+
+    .side-panel-header {
+      font-size: 12px; color: #64748b; text-transform: uppercase;
+      letter-spacing: .08em; display: flex; align-items: center; gap: 8px;
+    }
+    .side-panel-header::after {
+      content: ''; flex: 1; height: 1px; background: #1f2937;
+    }
+
+    /* loading mini */
+    .loading-mini {
+      display: none; align-items: center; gap: 10px; padding: 8px 12px;
+      border-radius: 8px; background: #0c1929; border: 1px solid #1e3a5f;
+    }
+    .loading-mini.active { display: flex; }
+    .loading-mini .spinner-sm {
+      width: 22px; height: 22px; flex-shrink: 0;
+      border: 2px solid #1e3a5f; border-top-color: #3b82f6;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-mini .stats-row {
+      font-size: 11px; color: #64748b; display: flex; gap: 14px; flex-wrap: wrap;
+    }
+
+    /* 事件日志 */
+    .event-log {
+      display: none; flex: 1;
+      border: 1px solid #1a2236; border-radius: 8px; background: #0a0f18;
+      overflow-y: auto; font-size: 12px; min-height: 200px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .event-log.active { display: block; }
+    .event-log .line {
+      padding: 2px 10px; border-bottom: 1px solid #0c1320;
+      display: flex; gap: 6px; align-items: flex-start;
+    }
+    .event-log .line:last-child { border-bottom: 0; }
+    .event-log .ts   { color: #4b5563; flex-shrink: 0; min-width: 54px; font-size: 11px; }
+    .event-log .tag  { flex-shrink: 0; min-width: 44px; font-weight: 600; font-size: 11px; }
+    .event-log .tag.event-tag { color: #f59e0b; }
+    .event-log .tag.data-tag  { color: #3b82f6; }
+    .event-log .tag.text-tag  { color: #6b7280; }
+    .event-log .tag.done-tag  { color: #22c55e; }
+    .event-log .msg  { color: #9ca3af; word-break: break-all; flex: 1; }
+
+    /* 文本流 */
+    .text-stream {
+      display: none; padding: 8px 10px; border-radius: 8px;
+      font-size: 12px; background: #0a0f18; border: 1px solid #1a2236;
+      color: #9ca3af; overflow-y: auto; white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      max-height: 180px;
+    }
+    .text-stream.active { display: block; }
+
+    /* ====== 全屏预览遮罩 ====== */
+    .preview-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.92); cursor: zoom-out;
+      align-items: center; justify-content: center;
+    }
+    .preview-overlay.open { display: flex; }
+    .preview-overlay img {
+      max-width: 90vw; max-height: 90vh; object-fit: contain;
+      border-radius: 6px; user-select: none;
+      transition: transform .1s ease; cursor: grab;
+    }
+    .preview-overlay img.dragging { cursor: grabbing; transition: none; }
+    .preview-close {
+      position: absolute; top: 16px; right: 24px;
+      font-size: 32px; color: #9ca3af; cursor: pointer;
+      line-height: 1; z-index: 1; user-select: none;
+    }
+    .preview-close:hover { color: #fff; }
+    .preview-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      font-size: 12px; color: #6b7280; pointer-events: none; text-shadow: 0 1px 4px #000;
+    }
+
+    /* ====== 图片展馆 ====== */
+    .gallery-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; }
+    .gallery-card h2 { margin: 0 0 4px; font-size: 16px; color: #e5e7eb; line-height: 1.4; }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;
+      margin-top: 12px;
+    }
+    .gallery-item {
+      background: #0f172a; border: 1px solid #1f2937; border-radius: 10px;
+      overflow: hidden; display: flex; flex-direction: column;
+      animation: fadeInUp .3s ease;
+    }
+    .gallery-item .thumb-wrap {
+      position: relative; overflow: hidden;
+      background: #0a0f18; cursor: pointer;
+    }
+    .gallery-item .thumb-wrap img {
+      width: 100%; height: auto; display: block; transition: transform .2s;
+      aspect-ratio: 1; object-fit: cover;
+    }
+    .gallery-item .thumb-wrap:hover img { transform: scale(1.05); }
+    .gallery-item .thumb-wrap .mode-badge {
+      position: absolute; top: 6px; right: 6px;
+      font-size: 10px; padding: 2px 8px; border-radius: 999px;
+      background: rgba(0,0,0,.7); color: #e5e7eb;
+    }
+    .gallery-item .ref-row {
+      display: flex; gap: 4px; padding: 4px 6px 0; flex-wrap: wrap;
+    }
+    .gallery-item .ref-thumb {
+      width: 48px; height: 48px; border-radius: 4px; overflow: hidden;
+      border: 1px solid #374151; cursor: pointer; flex-shrink: 0;
+      background: #0a0f18;
+    }
+    .gallery-item .ref-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-item .ref-thumb:hover { border-color: #3b82f6; }
+    .gallery-item .info {
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1;
+    }
+    .gallery-item .info .prompt-text {
+      font-size: 12px; color: #9ca3af; line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden; word-break: break-word; flex: 1;
+    }
+    .gallery-item .info .prompt-row { display: flex; gap: 6px; align-items: flex-start; }
+    .gallery-item .info .copy-prompt {
+      background: none; border: 0; color: #4b5563; cursor: pointer;
+      font-size: 13px; padding: 1px 4px; line-height: 1; flex-shrink: 0;
+    }
+    .gallery-item .info .copy-prompt:hover { color: #e5e7eb; }
+    .gallery-item .info .meta {
+      font-size: 11px; color: #4b5563; display: flex; justify-content: space-between; align-items: center;
+    }
+    .gallery-item .info .del-btn {
+      background: none; border: 0; color: #6b7280; cursor: pointer;
+      font-size: 16px; padding: 2px 6px; line-height: 1;
+    }
+    .gallery-item .info .del-btn:hover { color: #ef4444; }
+    .gallery-empty { text-align: center; color: #4b5563; font-size: 13px; padding: 24px 0; line-height: 1.6; }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-tabs">
+      <div class="top-tab active" data-page="draw">
+        画图<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Vẽ ảnh</span>
+      </div>
+      <div class="top-tab" data-page="gallery">
+        图片展馆 <span id="topGalleryBadge" style="font-size:12px;opacity:.7;"></span><br>
+        <span style="font-size:11px;font-weight:normal;opacity:0.8">Thư viện ảnh</span>
+      </div>
+    </div>
+
+    <div id="tabDraw" class="tab-page active">
+    <div class="card">
+      <h1>AI 图片生成<br><span style="font-size:16px;color:#94a3b8;font-weight:normal;">Tạo ảnh AI</span></h1>
+
+      <div class="main-panel">
+
+        <div class="img-picker">
+          <label>
+            参考图片（可选，上传后自动切换为图生图模式，支持多张）<br>
+            <span style="font-size:12px;color:#94a3b8;font-weight:normal">Ảnh tham khảo (Tùy chọn, tải lên tự động đổi sang Ảnh-Sinh-Ảnh, hỗ trợ nhiều ảnh)</span>
+          </label>
+          <div class="thumb-row" id="thumbRow">
+            <input id="imageFile" type="file" accept="image/*" multiple style="display:none;" />
+            <div id="thumbAdd" class="thumb-add" title="添加参考图片 (Thêm ảnh tham khảo)">+</div>
+          </div>
+        </div>
+
+        <div>
+          <label for="prompt">
+            图片描述（提示词）<br>
+            <span style="font-size:12px;color:#94a3b8;font-weight:normal">Mô tả ảnh (Prompt)</span>
+          </label>
+          <textarea id="prompt" placeholder="例如：一只在雨中奔跑的柴犬，皮克斯动画风格&#10;Ví dụ: Một chú chó Shiba chạy trong mưa, phong cách hoạt hình Pixar"></textarea>
+        </div>
+
+        <button id="genBtn" style="margin-top:10px; width:100%;">
+          生成图片<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo ảnh</span>
+        </button>
+
+        <div id="resultArea" class="result-area">
+          <img id="resultImg" alt="生成的图片 (Ảnh đã tạo)" />
+          <div class="result-info"><span id="resultStats"></span></div>
+          <div class="actions">
+            <button id="downloadBtn">下载图片<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Tải ảnh</span></button>
+            <button id="copyBtn" class="secondary">复制到剪贴板<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Sao chép</span></button>
+          </div>
+        </div>
+
+        <div id="statusBar" class="status-bar"></div>
+      </div>
+
+      <div class="side-panel">
+        <div class="side-panel-header">
+          实时事件流 <span style="font-size:10px; opacity:0.8; margin-left:4px;">(Luồng sự kiện trực tiếp)</span>
+        </div>
+
+        <div id="loadingMini" class="loading-mini">
+          <div class="spinner-sm"></div>
+          <div class="stats-row">
+            <span id="statEvents">📡 事件 (Sự kiện): 0</span>
+            <span id="statTextLen">📝 文本 (Văn bản): 0 字</span>
+            <span id="statElapsed">⏱ 0s</span>
+          </div>
+        </div>
+
+        <div id="eventLog" class="event-log"></div>
+        <div id="textStream" class="text-stream"></div>
+      </div>
+      </div>
+    </div>
+
+    <div id="previewOverlay" class="preview-overlay">
+      <span class="preview-close">&times;</span>
+      <img id="previewImg" alt="预览 (Xem trước)" draggable="false" />
+      <span class="preview-hint">滚轮缩放 (Cuộn để thu phóng)  ·  ESC 关闭 (ESC để đóng)</span>
+    </div>
+
+    <div id="tabGallery" class="tab-page">
+    <div class="gallery-card">
+      <h2>
+        生成记录展馆 <span id="galleryCount" style="font-size:13px;color:#64748b;font-weight:400;"></span><br>
+        <span style="font-size:13px;color:#94a3b8;font-weight:normal">Thư viện lịch sử tạo ảnh</span>
+      </h2>
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <div id="galleryEmpty" class="gallery-empty" style="display:none;">
+        暂无生成记录，快去生成第一张图片吧<br>
+        <span style="font-size:12px;color:#64748b;display:block;margin-top:4px;">Chưa có lịch sử, hãy tạo bức ảnh đầu tiên nhé</span>
+      </div>
+    </div>
+    </div>
+
+    </div>
+
+  <script>
+    // ========== DOM 引用 ==========
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
+    const els = {
+      topTabs: $$('.top-tab'),
+      tabDraw: $('#tabDraw'),
+      tabGallery: $('#tabGallery'),
+      topGalleryBadge: $('#topGalleryBadge'),
+      imageFile: $('#imageFile'),
+      thumbRow: $('#thumbRow'),
+      thumbAdd: $('#thumbAdd'),
+      prompt: $('#prompt'),
+      genBtn: $('#genBtn'),
+      loadingMini: $('#loadingMini'),
+      statEvents: $('#statEvents'),
+      statTextLen: $('#statTextLen'),
+      statElapsed: $('#statElapsed'),
+      eventLog: $('#eventLog'),
+      textStream: $('#textStream'),
+      statusBar: $('#statusBar'),
+      resultArea: $('#resultArea'),
+      resultImg: $('#resultImg'),
+      resultStats: $('#resultStats'),
+      downloadBtn: $('#downloadBtn'),
+      copyBtn: $('#copyBtn'),
+      previewOverlay: $('#previewOverlay'),
+      previewImg: $('#previewImg'),
+      galleryGrid: $('#galleryGrid'),
+      galleryCount: $('#galleryCount'),
+      galleryEmpty: $('#galleryEmpty'),
+    };
+
+    let resultDataUrl = null;
+    let resultBlob = null;
+
+    // ========== 多图选择器 ==========
+    let refImages = []; // { file, dataUrl }
+
+    function renderThumbnails() {
+      // 清除旧缩略图
+      els.thumbRow.querySelectorAll('.thumb-item').forEach((el) => el.remove());
+      refImages.forEach((ref, i) => {
+        const item = document.createElement('div');
+        item.className = 'thumb-item';
+        const img = document.createElement('img');
+        img.src = ref.dataUrl;
+        img.alt = '参考图 (Ảnh tham khảo) ' + (i + 1);
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          resultDataUrl = ref.dataUrl;
+          openPreview();
+        });
+        item.appendChild(img);
+        const rm = document.createElement('button');
+        rm.className = 'thumb-remove';
+        rm.textContent = '×';
+        rm.title = '移除 (Xóa)';
+        rm.addEventListener('click', (e) => {
+          e.stopPropagation();
+          refImages.splice(i, 1);
+          renderThumbnails();
+        });
+        item.appendChild(rm);
+        els.thumbRow.insertBefore(item, els.thumbAdd);
+      });
+    }
+
+    function addRefFiles(files) {
+      const valid = Array.from(files).filter((f) => {
+        if (f.size > 50 * 1024 * 1024) { alert(`${f.name} 超过 50MB，已跳过 (Vượt quá 50MB, đã bỏ qua)`); return false; }
+        return true;
+      });
+      valid.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          refImages.push({ file, dataUrl: reader.result });
+          renderThumbnails();
+        };
+        reader.readAsDataURL(file);
+      });
+      els.imageFile.value = '';
+    }
+
+    function clearRefImages() {
+      refImages = [];
+      renderThumbnails();
+    }
+
+    function lockInputs() {
+      els.prompt.disabled = true;
+      els.thumbAdd.style.display = 'none';
+      els.thumbRow.querySelectorAll('.thumb-remove').forEach((b) => { b.style.display = 'none'; });
+    }
+
+    function unlockInputs() {
+      els.prompt.disabled = false;
+      els.thumbAdd.style.display = '';
+      els.thumbRow.querySelectorAll('.thumb-remove').forEach((b) => { b.style.display = ''; });
+    }
+
+    els.thumbAdd.addEventListener('click', () => els.imageFile.click());
+    els.imageFile.addEventListener('change', () => {
+      if (els.imageFile.files.length) addRefFiles(els.imageFile.files);
+    });
+
+    // ========== 顶部 Tab 切换 ==========
+    els.topTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        els.topTabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        const page = tab.dataset.page;
+        els.tabDraw.classList.toggle('active', page === 'draw');
+        els.tabGallery.classList.toggle('active', page === 'gallery');
+      });
+    });
+
+    // ========== 图片展馆 (IndexedDB) ==========
+    const DB_NAME = 'img-gen-gallery';
+    const DB_VERSION = 1;
+    let gallery = [];
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains('records')) {
+            req.result.createObjectStore('records', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function loadGallery() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction('records', 'readonly');
+        const all = await new Promise((resolve, reject) => {
+          const req = tx.objectStore('records').getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        gallery = all.sort((a, b) => b.id - a.id);
+        db.close();
+      } catch { /* gallery 保持空 */ }
+    }
+
+    async function saveRecord(record) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction('records', 'readwrite');
+        tx.objectStore('records').put(record);
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch {}
+    }
+
+    async function deleteRecord(id) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction('records', 'readwrite');
+        tx.objectStore('records').delete(id);
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch {}
+    }
+
+    async function addToGallery(dataUrl, prompt, mode, refDataUrl) {
+      const id = Date.now();
+      const record = {
+        id,
+        dataUrl,
+        prompt,
+        mode,
+        refDataUrl: refDataUrl || null,
+        time: new Date().toLocaleString('zh-CN'),
+      };
+      gallery.unshift(record);
+      renderGallery();
+      saveRecord(record);
+    }
+
+    async function deleteFromGallery(id) {
+      gallery = gallery.filter((r) => r.id !== id);
+      renderGallery();
+      deleteRecord(id);
+    }
+
+    function renderGallery() {
+      els.galleryGrid.innerHTML = '';
+      if (gallery.length === 0) {
+        els.galleryEmpty.style.display = '';
+        els.galleryCount.textContent = '';
+        els.topGalleryBadge.textContent = '';
+        return;
+      }
+      els.galleryEmpty.style.display = 'none';
+      els.galleryCount.textContent = `(${gallery.length} 张)`;
+      els.topGalleryBadge.textContent = `(${gallery.length})`;
+
+      for (const r of gallery) {
+        const card = document.createElement('div');
+        card.className = 'gallery-item';
+
+        const thumbWrap = document.createElement('div');
+        thumbWrap.className = 'thumb-wrap';
+        const img = document.createElement('img');
+        img.src = r.dataUrl;
+        img.alt = '生成的图片 (Ảnh đã tạo)';
+        img.loading = 'lazy';
+        img.addEventListener('click', () => {
+          resultDataUrl = r.dataUrl;
+          openPreview();
+        });
+        thumbWrap.appendChild(img);
+
+        const badge = document.createElement('span');
+        badge.className = 'mode-badge';
+        badge.textContent = r.mode === 1 ? '文生图 (Văn bản->Ảnh)' : '图生图 (Ảnh->Ảnh)';
+        thumbWrap.appendChild(badge);
+
+        card.appendChild(thumbWrap);
+
+        // 参考图行（图生图）
+        if (r.refDataUrl) {
+          const refRow = document.createElement('div');
+          refRow.className = 'ref-row';
+          const refThumb = document.createElement('div');
+          refThumb.className = 'ref-thumb';
+          const refImg = document.createElement('img');
+          refImg.src = r.refDataUrl;
+          refImg.alt = '参考图 (Ảnh tham khảo)';
+          refThumb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resultDataUrl = r.refDataUrl;
+            openPreview();
+          });
+          refThumb.appendChild(refImg);
+          refRow.appendChild(refThumb);
+          card.appendChild(refRow);
+        }
+
+        // 信息区域
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const promptRow = document.createElement('div');
+        promptRow.className = 'prompt-row';
+        const promptEl = document.createElement('div');
+        promptEl.className = 'prompt-text';
+        promptEl.textContent = r.prompt;
+        promptEl.title = r.prompt;
+        promptRow.appendChild(promptEl);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-prompt';
+        copyBtn.innerHTML = '&#x1f4cb;';
+        copyBtn.title = '复制提示词 (Sao chép Prompt)';
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(r.prompt).then(() => {
+            copyBtn.innerHTML = '&#x2705;';
+            setTimeout(() => { copyBtn.innerHTML = '&#x1f4cb;'; }, 1200);
+          });
+        });
+        promptRow.appendChild(copyBtn);
+        info.appendChild(promptRow);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = r.time;
+        meta.appendChild(timeSpan);
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del-btn';
+        delBtn.innerHTML = '&#x1f5d1;';
+        delBtn.title = '删除 (Xóa)';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteFromGallery(r.id);
+        });
+        meta.appendChild(delBtn);
+        info.appendChild(meta);
+
+        card.appendChild(info);
+        els.galleryGrid.appendChild(card);
+      }
+    }
+
+    // 页面加载时从 IndexedDB 恢复
+    loadGallery().then(() => renderGallery());
+
+    // ========== 事件日志 ==========
+    let eventCount = 0;
+    function appendEvent(type, msg) {
+      eventCount++;
+      els.statEvents.textContent = `📡 事件 (Sự kiện): ${eventCount}`;
+      els.eventLog.classList.add('active');
+      const now = new Date();
+      const ts = now.toTimeString().slice(0, 8);
+      const tagClass = type === 'event' ? 'event-tag' : type === 'data' ? 'data-tag' : type === 'text' ? 'text-tag' : 'done-tag';
+      const tagLabel = type === 'event' ? 'EVENT' : type === 'data' ? 'DATA' : type === 'text' ? 'TEXT' : 'DONE';
+
+      const line = document.createElement('div');
+      line.className = 'line';
+      line.innerHTML = `<span class="ts">${ts}</span><span class="tag ${tagClass}">${tagLabel}</span><span class="msg">${escapeHtml(msg)}</span>`;
+      els.eventLog.appendChild(line);
+      els.eventLog.scrollTop = els.eventLog.scrollHeight;
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ========== 计时器 ==========
+    let startTime = 0;
+    let timerInterval = null;
+    function startTimer() {
+      startTime = Date.now();
+      els.statElapsed.textContent = '⏱ 0s';
+      timerInterval = setInterval(() => {
+        const s = Math.floor((Date.now() - startTime) / 1000);
+        els.statElapsed.textContent = `⏱ ${s}s`;
+      }, 500);
+    }
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      const s = ((Date.now() - startTime) / 1000).toFixed(1);
+      els.statElapsed.textContent = `⏱ ${s}s`;
+    }
+
+    // ========== 递归搜索 base64 ==========
+    function extractBase64AsDataUrl(dataObj) {
+      if (dataObj == null) return null;
+      if (Array.isArray(dataObj)) {
+        for (const item of dataObj) {
+          const found = extractBase64AsDataUrl(item);
+          if (found) return found;
+        }
+      } else if (typeof dataObj === 'object') {
+        for (const [key, value] of Object.entries(dataObj)) {
+          if (key === 'result' && typeof value === 'string' && (value.startsWith('iVBOR') || value.length > 1000)) {
+            return 'data:image/png;base64,' + value;
+          }
+          const found = extractBase64AsDataUrl(value);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // ========== 构建请求体 ==========
+    async function buildPayload() {
+      const prompt = els.prompt.value.trim();
+      
+      // Model sẽ được gán ở file proxy backend của Cloudflare
+      if (refImages.length > 0) {
+        const editPrompt = `请根据以下要求，对我提供的参考图片进行编辑修改，直接生成修改后的新图片。要求：${prompt}`;
+        const content = refImages.map((ref) => ({ type: 'input_image', image_url: ref.dataUrl }));
+        content.push({ type: 'input_text', text: editPrompt });
+        return {
+          input: [{ role: 'user', content }],
+          tools: [{ type: 'image_generation', output_format: 'png' }],
+          stream: true,
+        };
+      } else {
+        return {
+          input: [
+            { role: 'system', content: '你是一个图片生成助手。用户要求你生成图片时，你必须调用 image_generation 工具来生成图片，不要用文字描述图片内容。直接生成图片，不要多说任何话。' },
+            { role: 'user', content: `请生成以下描述的图片：${prompt}` },
+          ],
+          tools: [{ type: 'image_generation', output_format: 'png' }],
+          stream: true,
+        };
+      }
+    }
+
+    // ========== UI 重置 ==========
+    function resetUI() {
+      els.loadingMini.classList.remove('active');
+      els.eventLog.classList.remove('active');
+      els.eventLog.innerHTML = '';
+      els.textStream.classList.remove('active');
+      els.textStream.textContent = '';
+      els.statusBar.className = 'status-bar';
+      els.statusBar.style.display = 'none';
+      els.statusBar.textContent = '';
+      els.resultArea.classList.remove('active');
+      els.genBtn.disabled = false;
+      els.genBtn.innerHTML = '生成图片<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo ảnh</span>';
+      resultDataUrl = null;
+      resultBlob = null;
+      eventCount = 0;
+      stopTimer();
+    }
+
+    // ========== 核心：发送请求 ==========
+    async function generate() {
+      const prompt = els.prompt.value.trim();
+      if (!prompt) { alert('请填写提示词 (Vui lòng nhập prompt)'); return; }
+
+      let payload;
+      try { payload = await buildPayload(); }
+      catch (e) { alert(e.message); return; }
+
+      // ====== UI 进入生成状态 ======
+      resetUI();
+      lockInputs();
+      els.genBtn.disabled = true;
+      els.genBtn.innerHTML = '生成中…<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Đang tạo...</span>';
+      els.loadingMini.classList.add('active');
+      els.statEvents.textContent = '📡 事件 (Sự kiện): 0';
+      els.statTextLen.textContent = '📝 文本 (Văn bản): 0 字';
+      startTimer();
+
+      appendEvent('event', '开始请求 (Bắt đầu gọi) POST /api/generate');
+
+      // Gọi vào Cloudflare Pages Function thay vì API gốc
+      const url = '/api/generate';
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      let collectedText = [];
+
+      try {
+        const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+
+        if (!response.ok) {
+          let errText = '';
+          try { errText = await response.text(); } catch {}
+          stopTimer();
+          els.loadingMini.classList.remove('active');
+          unlockInputs();
+          els.genBtn.disabled = false;
+          els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+          appendEvent('event', `HTTP请求失败 (Yêu cầu thất bại) ${response.status} — ${errText}`);
+          els.statusBar.className = 'status-bar err';
+          els.statusBar.innerHTML = `请求失败！(Yêu cầu thất bại!) HTTP ${response.status}${errText ? '<br>' + errText.slice(0, 500) : ''}`;
+          return;
+        }
+
+        appendEvent('event', `HTTP ${response.status} — 连接成功，开始接收流… (Kết nối thành công, đang nhận dữ liệu stream...)`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            if (trimmed.startsWith('event: ')) {
+              const eventName = trimmed.slice(7);
+              if (eventName !== 'response.output_text.delta') {
+                appendEvent('event', eventName);
+              }
+              continue;
+            }
+
+            if (trimmed.startsWith('data: ')) {
+              const dataStr = trimmed.slice(6);
+              if (dataStr === '[DONE]' || dataStr === '') continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+
+                const dataUrl = extractBase64AsDataUrl(data);
+                if (dataUrl) {
+                  resultDataUrl = dataUrl;
+
+                  const b64 = dataUrl.split(',')[1];
+                  const byteChars = atob(b64);
+                  const bytes = new Uint8Array(byteChars.length);
+                  for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+                  resultBlob = new Blob([bytes], { type: 'image/png' });
+
+                  const sizeKB = (bytes.length / 1024).toFixed(1);
+                  const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+
+                  stopTimer();
+                  els.loadingMini.classList.remove('active');
+
+                  els.resultImg.src = dataUrl;
+                  els.resultArea.classList.add('active');
+                  els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth || '?'} × ${els.resultImg.naturalHeight || '?'}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} 个事件 (Sự kiện)  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+
+                  els.resultImg.onload = () => {
+                    els.resultStats.textContent = `📐 ${els.resultImg.naturalWidth} × ${els.resultImg.naturalHeight}  ·  💾 ${sizeStr}  ·  📡 ${eventCount} 个事件 (Sự kiện)  ·  ⏱ ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+                  };
+
+                  appendEvent('done', `图片已抓取！大小: (Đã lấy được ảnh! Dung lượng:) ${sizeStr}`);
+                  unlockInputs();
+                  els.genBtn.disabled = false;
+                  els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+
+                  // 添加到展馆
+                  const mode = refImages.length > 0 ? 2 : 1;
+                  const refUrl = refImages.length > 0 ? refImages[0].dataUrl : null;
+                  addToGallery(dataUrl, prompt, mode, refUrl);
+                  clearRefImages();
+                  return;
+                }
+
+                const delta = data.delta;
+                if (typeof delta === 'string' && delta) {
+                  collectedText.push(delta);
+                  els.textStream.classList.add('active');
+                  els.textStream.textContent += delta;
+                  els.textStream.scrollTop = els.textStream.scrollHeight;
+                  els.statTextLen.textContent = `📝 文本 (Văn bản): ${collectedText.join('').length} 字 (từ)`;
+                  if (collectedText.length % 5 === 1) {
+                    appendEvent('text', `已接收 (Đã nhận) ${collectedText.length} 个 delta (累计/Tổng ${collectedText.join('').length} 字/từ)`);
+                  }
+                }
+
+                if (!data.delta && eventCount % 3 === 0) {
+                  const keys = Object.keys(data).slice(0, 3).join(', ');
+                  appendEvent('data', keys ? `{ ${keys}... }` : `[${typeof data}]`);
+                }
+              } catch {}
+            }
+          }
+        }
+
+        // 流结束，没图片
+        stopTimer();
+        els.loadingMini.classList.remove('active');
+        unlockInputs();
+        els.genBtn.disabled = false;
+        els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+
+        appendEvent('event', '流已结束 (Stream kết thúc) — [DONE]');
+        if (collectedText.length) {
+          const fullText = collectedText.join('');
+          appendEvent('done', `模型返回 ${fullText.length} 字文本，未生成图片 (Model trả về văn bản, không có ảnh)`);
+          els.textStream.classList.add('active');
+          els.textStream.textContent = fullText;
+          els.statusBar.className = 'status-bar err';
+          els.statusBar.innerHTML = '⚠️ 流式返回结束，没找到图片。模型选择了用文字回答而不是生成图片。<br>提示：尝试更明确的描述，例如 "请编辑这张图片…"<br><br>(Stream kết thúc, không tìm thấy ảnh. Model đã trả lời bằng chữ. Mẹo: Hãy mô tả rõ hơn, ví dụ "Hãy chỉnh sửa bức ảnh này...")';
+        } else {
+          appendEvent('done', '流结束，无图片无文本 (Stream kết thúc, không ảnh không chữ)');
+          els.statusBar.className = 'status-bar err';
+          els.statusBar.innerHTML = '⚠️ 流式返回结束，未收到图片也没有文本内容。可能服务器未正确响应。<br>(Stream kết thúc, không nhận được dữ liệu ảnh hay chữ. Có thể máy chủ phản hồi lỗi.)';
+        }
+      } catch (err) {
+        stopTimer();
+        els.loadingMini.classList.remove('active');
+        unlockInputs();
+        els.genBtn.disabled = false;
+        els.genBtn.innerHTML = '重新生成<br><span style="font-size:12px;font-weight:normal;opacity:0.8">Tạo lại</span>';
+        appendEvent('event', `异常 (Lỗi): ${err.message || err}`);
+        els.statusBar.className = 'status-bar err';
+        els.statusBar.textContent = '发生异常 (Đã xảy ra lỗi)：' + (err.message || err);
+      }
+    }
+
+    // ========== 下载 ==========
+    function downloadFilename() {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `img-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
+    }
+
+    function download() {
+      if (!resultBlob) return;
+      const url = URL.createObjectURL(resultBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = downloadFilename();
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ========== 复制 ==========
+    async function copyImage() {
+      if (!resultBlob) return;
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': resultBlob })]);
+        const orig = els.copyBtn.innerHTML;
+        els.copyBtn.innerHTML = '已复制！<br><span style="font-size:11px;font-weight:normal;opacity:0.8">Đã chép!</span>';
+        setTimeout(() => { els.copyBtn.innerHTML = orig; }, 1500);
+      } catch {
+        alert('复制失败，浏览器可能不支持。请用下载替代。(Sao chép thất bại, trình duyệt không hỗ trợ. Vui lòng nhấn Tải ảnh xuống.)');
+      }
+    }
+
+    // ========== 图片预览（点击放大 / ESC 关闭 / 滚轮缩放 / 拖拽平移） ==========
+    let previewScale = 1;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let dragStartX = 0, dragStartY = 0;
+    let panStartX = 0, panStartY = 0;
+
+    function updatePreviewTransform() {
+      els.previewImg.style.transform = `translate(${panX}px, ${panY}px) scale(${previewScale})`;
+    }
+
+    function openPreview() {
+      if (!resultDataUrl) return;
+      previewScale = 1;
+      panX = 0;
+      panY = 0;
+      els.previewImg.src = resultDataUrl;
+      updatePreviewTransform();
+      els.previewOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+      els.previewOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    els.resultImg.addEventListener('click', openPreview);
+    els.previewOverlay.addEventListener('click', (e) => {
+      if (e.target === els.previewOverlay || e.target.classList.contains('preview-close')) {
+        closePreview();
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.previewOverlay.classList.contains('open')) {
+        closePreview();
+      }
+    });
+
+    // 滚轮缩放（以鼠标位置为锚点）
+    els.previewOverlay.addEventListener('wheel', (e) => {
+      if (!els.previewOverlay.classList.contains('open')) return;
+      e.preventDefault();
+
+      const rect = els.previewImg.getBoundingClientRect();
+      const fx = (e.clientX - rect.left) / rect.width;
+      const fy = (e.clientY - rect.top) / rect.height;
+
+      const oldScale = previewScale;
+      previewScale = Math.max(0.2, Math.min(5, previewScale + (e.deltaY > 0 ? -0.1 : 0.1)));
+
+      const ratio = previewScale / oldScale;
+      const newLeft = e.clientX - fx * rect.width * ratio;
+      const newTop  = e.clientY - fy * rect.height * ratio;
+
+      panX += newLeft - rect.left;
+      panY += newTop  - rect.top;
+      updatePreviewTransform();
+    });
+
+    // 拖拽平移
+    els.previewImg.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      els.previewImg.classList.add('dragging');
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      panStartX = panX;
+      panStartY = panY;
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      panX = panStartX + (e.clientX - dragStartX);
+      panY = panStartY + (e.clientY - dragStartY);
+      updatePreviewTransform();
+    });
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      els.previewImg.classList.remove('dragging');
+    });
+
+    // ========== 事件绑定 ==========
+    els.genBtn.addEventListener('click', generate);
+    els.downloadBtn.addEventListener('click', download);
+    els.copyBtn.addEventListener('click', copyImage);
+    els.prompt.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+    });
+
+  </script>
+</body>
+</html>
